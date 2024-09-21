@@ -57,7 +57,7 @@ def test_lambda_function():
         payload = {"bla": "blab"}
 
         try:
-            lambda_client.invoke(FunctionName=function_name, Payload=json.dumps(payload).encode('utf-8')
+            lambda_client.invoke(FunctionName=function_name, Payload=json.dumps(payload).encode('utf-8'))
         except ex:
             print(ex)
 
