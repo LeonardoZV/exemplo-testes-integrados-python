@@ -1,3 +1,4 @@
+import time
 import json
 import pytest
 from testcontainers.localstack import LocalStackContainer
@@ -35,7 +36,7 @@ def subscribe_sqs_to_sns(sns_client, topic_arn, queue_arn):
 def test_lambda_function(): 
     localstack = (LocalStackContainer(image="localstack/localstack:latest")
                     .with_services("lambda", "sns", "sqs")
-                    .with_env("LAMBDA_RUNTIME_IMAGE_MAPPING", '{"python3.12": "public.ecr.aws/lambda/python:3.12"}')
+                    # .with_env("LAMBDA_RUNTIME_IMAGE_MAPPING", '{"python3.12": "public.ecr.aws/lambda/python:3.12"}')
                     .with_env("LAMBDA_DOCKER_FLAGS", f"-l {LABEL_SESSION_ID}={SESSION_ID}")  # NECESSARIO PARA QUE O LAMBDA CONTAINER SEJA EXCLUIDO AUTOMATICAMENTE. É UM BUG QUE FOI CONCERTADO NA LIB JAVA (https://github.com/localstack/localstack/issues/8616) MAS AINDA NÃO NA LIB PYTHON.
                     .with_volume_mapping("/var/run/docker.sock", "/var/run/docker.sock", "rw"))  # NECESSARIO PARA QUE O LAMBDA CONTAINER SEJA CRIADO AUTOMATICAMENTE.
 
@@ -64,6 +65,8 @@ def test_lambda_function():
         response = lambda_client.get_function(FunctionName='teste')
 
         print(f"Response: {response}")
+
+        time.sleep(10000)
 
         messages = sqs_client.receive_message(QueueUrl=queue_url, MaxNumberOfMessages=10, WaitTimeSeconds=5).get('Messages', [])
         messages_dict = [json.loads(json.loads(message["Body"])["Message"]) for message in messages]
