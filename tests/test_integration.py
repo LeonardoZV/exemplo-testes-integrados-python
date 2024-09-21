@@ -33,7 +33,6 @@ def subscribe_sqs_to_sns(sns_client, topic_arn, queue_arn):
 
 @pytest.mark.filterwarnings("ignore:datetime.datetime.utcnow")
 def test_lambda_function(): 
-
     localstack = (LocalStackContainer(image="localstack/localstack:latest")
                     .with_services("lambda", "sns", "sqs")
                     .with_env("LAMBDA_RUNTIME_IMAGE_MAPPING", '{"python3.12": "public.ecr.aws/lambda/python:3.12"}')
@@ -56,7 +55,15 @@ def test_lambda_function():
         subscribe_sqs_to_sns(sns_client, topic_arn, sqs_queue_arn)
 
         payload = {"bla": "blab"}
-        lambda_client.invoke(FunctionName=function_name, Payload=json.dumps(payload).encode('utf-8'))
+
+        try:
+            lambda_client.invoke(FunctionName=function_name, Payload=json.dumps(payload).encode('utf-8')
+        except ex:
+            print(ex)
+
+        response = client.get_function(FunctionName='teste')
+
+        print(f"Response: {response}")
 
         messages = sqs_client.receive_message(QueueUrl=queue_url, MaxNumberOfMessages=10, WaitTimeSeconds=5).get('Messages', [])
         messages_dict = [json.loads(json.loads(message["Body"])["Message"]) for message in messages]
