@@ -58,7 +58,7 @@ def test_lambda_function():
 
         try:
             lambda_client.invoke(FunctionName=function_name, Payload=json.dumps(payload).encode('utf-8'))
-        except ex:
+        except Exception as ex:
             print(ex)
 
         response = client.get_function(FunctionName='teste')
