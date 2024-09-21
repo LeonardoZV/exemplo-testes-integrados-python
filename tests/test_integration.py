@@ -61,7 +61,7 @@ def test_lambda_function():
         except Exception as ex:
             print(ex)
 
-        response = client.get_function(FunctionName='teste')
+        response = lambda_client.get_function(FunctionName='teste')
 
         print(f"Response: {response}")
 
