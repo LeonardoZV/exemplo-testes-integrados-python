@@ -4,7 +4,7 @@ from testcontainers.localstack import LocalStackContainer
 from testcontainers.core.labels import LABEL_SESSION_ID, SESSION_ID
 
 
-def create_lambda_function(lambda_client, lambda_function_name): 
+def create_lambda_function(lambda_client, lambda_function_name):
     response = lambda_client.create_function(
         FunctionName=lambda_function_name,
         Runtime='python3.12',
