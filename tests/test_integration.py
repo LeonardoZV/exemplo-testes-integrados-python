@@ -1,25 +1,10 @@
-# import zipfile
-# import os
-# import time
 import json
 import pytest
 from testcontainers.localstack import LocalStackContainer
 from testcontainers.core.labels import LABEL_SESSION_ID, SESSION_ID
 
-# s3_client = localstack.get_client("s3")
 
-# s3_client.create_bucket(Bucket="bucket", CreateBucketConfiguration={'LocationConstraint': 'us-west-1'})
-
-# with zipfile.ZipFile("app/lambda_function.zip", 'w', zipfile.ZIP_DEFLATED) as zipf:
-
-#     zipf.write("app/lambda_function.py", os.path.basename("app/lambda_function.py"))
-
-# s3_client.upload_file("app/lambda_function.zip", "bucket", "app/lambda_function.zip")      
-
-# Code={'S3Bucket':'bucket', 'S3Key':'app/lambda_function.zip'},
-# PackageType='Zip'
-
-def create_lambda_function(lambda_client, lambda_function_name):
+def create_lambda_function(lambda_client, lambda_function_name): 
     response = lambda_client.create_function(
         FunctionName=lambda_function_name,
         Runtime='python3.12',
@@ -30,26 +15,30 @@ def create_lambda_function(lambda_client, lambda_function_name):
     lambda_client.get_waiter('function_active_v2').wait(FunctionName=lambda_function_name)
     return response['FunctionArn']
 
-def create_sns_topic(sns_client, sns_topic_name):
+
+def create_sns_topic(sns_client, sns_topic_name): 
     response = sns_client.create_topic(Name=sns_topic_name)
     return response['TopicArn']
 
-def create_sqs_queue(sqs_client, queue_name):
+
+def create_sqs_queue(sqs_client, queue_name): 
     queue_url = sqs_client.create_queue(QueueName=queue_name)['QueueUrl']
     queue_arn = sqs_client.get_queue_attributes(QueueUrl=queue_url, AttributeNames=['QueueArn'])['Attributes']['QueueArn']
     return queue_url, queue_arn
 
-def subscribe_sqs_to_sns(sns_client, topic_arn, queue_arn):
+
+def subscribe_sqs_to_sns(sns_client, topic_arn, queue_arn): 
     response = sns_client.subscribe(TopicArn=topic_arn, Protocol='sqs', Endpoint=queue_arn)
 
+
 @pytest.mark.filterwarnings("ignore:datetime.datetime.utcnow")
-def teste_lambda_function():
+def test_lambda_function(): 
 
     localstack = (LocalStackContainer(image="localstack/localstack:latest")
                     .with_services("lambda", "sns", "sqs")
                     .with_env("LAMBDA_RUNTIME_IMAGE_MAPPING", '{"python3.12": "public.ecr.aws/lambda/python:3.12"}')
-                    .with_env("LAMBDA_DOCKER_FLAGS", f"-l {LABEL_SESSION_ID}={SESSION_ID}")     # NECESSARIO PARA QUE O LAMBDA CONTAINER SEJA EXCLUIDO AUTOMATICAMENTE. É UM BUG QUE FOI CONCERTADO NA LIB JAVA (https://github.com/localstack/localstack/issues/8616) MAS AINDA NÃO NA LIB PYTHON.
-                    .with_volume_mapping("/var/run/docker.sock", "/var/run/docker.sock", "rw")) # NECESSARIO PARA QUE O LAMBDA CONTAINER SEJA CRIADO AUTOMATICAMENTE.
+                    .with_env("LAMBDA_DOCKER_FLAGS", f"-l {LABEL_SESSION_ID}={SESSION_ID}")  # NECESSARIO PARA QUE O LAMBDA CONTAINER SEJA EXCLUIDO AUTOMATICAMENTE. É UM BUG QUE FOI CONCERTADO NA LIB JAVA (https://github.com/localstack/localstack/issues/8616) MAS AINDA NÃO NA LIB PYTHON.
+                    .with_volume_mapping("/var/run/docker.sock", "/var/run/docker.sock", "rw"))  # NECESSARIO PARA QUE O LAMBDA CONTAINER SEJA CRIADO AUTOMATICAMENTE.
 
     with localstack as localstack:
 
