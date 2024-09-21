@@ -56,17 +56,7 @@ def test_lambda_function():
         subscribe_sqs_to_sns(sns_client, topic_arn, sqs_queue_arn)
 
         payload = {"bla": "blab"}
-
-        try:
-            lambda_client.invoke(FunctionName=function_name, Payload=json.dumps(payload).encode('utf-8'))
-        except Exception as ex:
-            print(ex)
-
-        response = lambda_client.get_function(FunctionName='teste')
-
-        print(f"Response: {response}")
-
-        time.sleep(10000)
+        lambda_client.invoke(FunctionName=function_name, Payload=json.dumps(payload).encode('utf-8'))
 
         messages = sqs_client.receive_message(QueueUrl=queue_url, MaxNumberOfMessages=10, WaitTimeSeconds=5).get('Messages', [])
         messages_dict = [json.loads(json.loads(message["Body"])["Message"]) for message in messages]
