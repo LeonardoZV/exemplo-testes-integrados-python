@@ -1,3 +1,4 @@
+import os
 import time
 import json
 import pytest
@@ -11,8 +12,8 @@ def create_lambda_function(lambda_client, lambda_function_name):
         Runtime='python3.12',
         Role='arn:aws:iam::000000000000:role/lambda-role',
         Handler='lambda_function.lambda_handler',
-        Code={'S3Bucket':'hot-reload', 'S3Key':'/home/runner/work/exemplo-testes-integrados-python/exemplo-testes-integrados-python/app'} # /home/runner/work/exemplo-testes-integrados-python/exemplo-testes-integrados-python/app D:\\source\\exemplo-testes-integrados-python\\app
-    )
+        Code={'S3Bucket': 'hot-reload', 'S3Key': os.path.abspath(os.path.dirname(__file__).replace("tests", "app"))}
+    )    
     lambda_client.get_waiter('function_active_v2').wait(FunctionName=lambda_function_name)
     return response['FunctionArn']
 
