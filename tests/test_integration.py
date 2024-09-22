@@ -12,9 +12,9 @@ def create_lambda_function(lambda_client, lambda_function_name):
         Runtime='python3.12',
         Role='arn:aws:iam::000000000000:role/lambda-role',
         Handler='lambda_function.lambda_handler',
-        Code={'S3Bucket': 'hot-reload', 'S3Key': }
+        Code={'S3Bucket': 'hot-reload', 'S3Key': lambda_folder_path}
     )
-    lambda_client.get_waiter('function_active_v2').wait(FunctionName=lambda_folder_path)
+    lambda_client.get_waiter('function_active_v2').wait(FunctionName=lambda_function_name)
     return response['FunctionArn']
 
 
