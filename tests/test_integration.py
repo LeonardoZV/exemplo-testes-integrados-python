@@ -11,7 +11,7 @@ def create_lambda_function(lambda_client, lambda_function_name):
         Runtime='python3.12',
         Role='arn:aws:iam::000000000000:role/lambda-role',
         Handler='lambda_function.lambda_handler',
-        Code={'S3Bucket':'hot-reload', 'S3Key':'D:\\source\\exemplo-testes-integrados-python\\app'}
+        Code={'S3Bucket':'hot-reload', 'S3Key':'/home/runner/work/exemplo-testes-integrados-python/exemplo-testes-integrados-python/app'} # /home/runner/work/exemplo-testes-integrados-python/exemplo-testes-integrados-python/app D:\\source\\exemplo-testes-integrados-python\\app
     )
     lambda_client.get_waiter('function_active_v2').wait(FunctionName=lambda_function_name)
     return response['FunctionArn']
@@ -36,7 +36,7 @@ def subscribe_sqs_to_sns(sns_client, topic_arn, queue_arn):
 def test_lambda_function(): 
     localstack = (LocalStackContainer(image="localstack/localstack:latest")
                     .with_services("lambda", "sns", "sqs")
-                    # .with_env("LAMBDA_RUNTIME_IMAGE_MAPPING", '{"python3.12": "public.ecr.aws/lambda/python:3.12"}')
+                    .with_env("LAMBDA_RUNTIME_IMAGE_MAPPING", '{"python3.12": "public.ecr.aws/lambda/python:3.12"}')
                     .with_env("LAMBDA_DOCKER_FLAGS", f"-l {LABEL_SESSION_ID}={SESSION_ID}")  # NECESSARIO PARA QUE O LAMBDA CONTAINER SEJA EXCLUIDO AUTOMATICAMENTE. É UM BUG QUE FOI CONCERTADO NA LIB JAVA (https://github.com/localstack/localstack/issues/8616) MAS AINDA NÃO NA LIB PYTHON.
                     .with_volume_mapping("/var/run/docker.sock", "/var/run/docker.sock", "rw"))  # NECESSARIO PARA QUE O LAMBDA CONTAINER SEJA CRIADO AUTOMATICAMENTE.
 
