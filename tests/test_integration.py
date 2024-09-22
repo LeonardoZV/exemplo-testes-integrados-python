@@ -37,7 +37,7 @@ def test_lambda_function():
     localstack = (LocalStackContainer(image="localstack/localstack:latest")
                   .with_services("lambda", "sns", "sqs")
                   .with_env("LAMBDA_RUNTIME_IMAGE_MAPPING", '{"python3.12": "public.ecr.aws/lambda/python:3.12"}')
-                  .with_env("LAMBDA_DOCKER_FLAGS", f"-l {LABEL_SESSION_ID}={SESSION_ID}")  # NECESSARIO PARA QUE O LAMBDA CONTAINER SEJA EXCLUIDO AUTOMATICAMENTE. É UM BUG QUE FOI CONCERTADO NA LIB JAVA (https://github.com/localstack/localstack/issues/8616) MAS AINDA NÃO NA LIB PYTHON.
+                  .with_env("LAMBDA_DOCKER_FLAGS", f"-l {LABEL_SESSION_ID}={SESSION_ID} -e LOCALSTACK=True")  # NECESSARIO PARA QUE O LAMBDA CONTAINER SEJA EXCLUIDO AUTOMATICAMENTE. É UM BUG QUE FOI CONCERTADO NA LIB JAVA (https://github.com/localstack/localstack/issues/8616) MAS AINDA NÃO NA LIB PYTHON.
                   .with_volume_mapping("/var/run/docker.sock", "/var/run/docker.sock", "rw"))  # NECESSARIO PARA QUE O LAMBDA CONTAINER SEJA CRIADO AUTOMATICAMENTE.
 
     with localstack as localstack:
