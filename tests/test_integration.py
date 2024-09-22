@@ -6,14 +6,15 @@ from testcontainers.core.labels import LABEL_SESSION_ID, SESSION_ID
 
 
 def create_lambda_function(lambda_client, lambda_function_name):
+    lambda_folder_path = os.path.abspath(os.path.dirname(__file__).replace("tests", "app"))
     response = lambda_client.create_function(
         FunctionName=lambda_function_name,
         Runtime='python3.12',
         Role='arn:aws:iam::000000000000:role/lambda-role',
         Handler='lambda_function.lambda_handler',
-        Code={'S3Bucket': 'hot-reload', 'S3Key': os.path.abspath(os.path.dirname(__file__).replace("tests", "app"))}
+        Code={'S3Bucket': 'hot-reload', 'S3Key': }
     )
-    lambda_client.get_waiter('function_active_v2').wait(FunctionName=lambda_function_name)
+    lambda_client.get_waiter('function_active_v2').wait(FunctionName=lambda_folder_path)
     return response['FunctionArn']
 
 
@@ -37,8 +38,11 @@ def test_lambda_function():
     localstack = (LocalStackContainer(image="localstack/localstack:latest")
                   .with_services("lambda", "sns", "sqs")
                   .with_env("LAMBDA_RUNTIME_IMAGE_MAPPING", '{"python3.12": "public.ecr.aws/lambda/python:3.12"}')
-                  .with_env("LAMBDA_DOCKER_FLAGS", f"-l {LABEL_SESSION_ID}={SESSION_ID} -e LOCALSTACK=True")  # NECESSARIO PARA QUE O LAMBDA CONTAINER SEJA EXCLUIDO AUTOMATICAMENTE. É UM BUG QUE FOI CONCERTADO NA LIB JAVA (https://github.com/localstack/localstack/issues/8616) MAS AINDA NÃO NA LIB PYTHON.
-                  .with_volume_mapping("/var/run/docker.sock", "/var/run/docker.sock", "rw"))  # NECESSARIO PARA QUE O LAMBDA CONTAINER SEJA CRIADO AUTOMATICAMENTE.
+                  # NECESSARIO PARA QUE O LAMBDA CONTAINER SEJA EXCLUIDO AUTOMATICAMENTE.
+                  # É UM BUG QUE FOI CONCERTADO NA LIB JAVA (https://github.com/localstack/localstack/issues/8616) MAS AINDA NÃO NA LIB PYTHON.
+                  .with_env("LAMBDA_DOCKER_FLAGS", f"-l {LABEL_SESSION_ID}={SESSION_ID} -e LOCALSTACK=True")  
+                  # NECESSARIO PARA QUE O LAMBDA CONTAINER SEJA CRIADO AUTOMATICAMENTE.
+                  .with_volume_mapping("/var/run/docker.sock", "/var/run/docker.sock", "rw"))  
 
     with localstack as localstack:
 
@@ -58,7 +62,8 @@ def test_lambda_function():
         payload = {"bla": "blab"}
         lambda_client.invoke(FunctionName=function_name, Payload=json.dumps(payload).encode('utf-8'))
 
-        messages = sqs_client.receive_message(QueueUrl=queue_url, MaxNumberOfMessages=10, WaitTimeSeconds=5).get('Messages', [])
+        response = sqs_client.receive_message(QueueUrl=queue_url, MaxNumberOfMessages=10, WaitTimeSeconds=5)
+        messages = response.get('Messages', [])
         messages_dict = [json.loads(json.loads(message["Body"])["Message"]) for message in messages]
 
         assert payload in messages_dict
