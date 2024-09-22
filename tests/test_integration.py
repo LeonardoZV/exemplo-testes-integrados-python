@@ -38,11 +38,12 @@ def test_lambda_function():
     localstack = (LocalStackContainer(image="localstack/localstack:latest")
                   .with_services("lambda", "sns", "sqs")
                   .with_env("LAMBDA_RUNTIME_IMAGE_MAPPING", '{"python3.12": "public.ecr.aws/lambda/python:3.12"}')
-                  # NECESSARIO PARA QUE O LAMBDA CONTAINER SEJA EXCLUIDO AUTOMATICAMENTE.
-                  # É UM BUG QUE FOI CONCERTADO NA LIB JAVA (https://github.com/localstack/localstack/issues/8616) MAS AINDA NÃO NA LIB PYTHON.
-                  .with_env("LAMBDA_DOCKER_FLAGS", f"-l {LABEL_SESSION_ID}={SESSION_ID} -e LOCALSTACK=True")  
+                  # SESSION_ID NECESSARIO PARA QUE O LAMBDA CONTAINER SEJA EXCLUIDO AUTOMATICAMENTE.
+                  # É UM BUG QUE FOI CONCERTADO NA LIB JAVA (https://github.com/localstack/localstack/issues/8616).
+                  # MAS AINDA CORRIGIDO NÃO NA LIB PYTHON.
+                  .with_env("LAMBDA_DOCKER_FLAGS", f"-l {LABEL_SESSION_ID}={SESSION_ID} -e LOCALSTACK=True")
                   # NECESSARIO PARA QUE O LAMBDA CONTAINER SEJA CRIADO AUTOMATICAMENTE.
-                  .with_volume_mapping("/var/run/docker.sock", "/var/run/docker.sock", "rw"))  
+                  .with_volume_mapping("/var/run/docker.sock", "/var/run/docker.sock", "rw"))
 
     with localstack as localstack:
 
@@ -54,7 +55,7 @@ def test_lambda_function():
         topic_name = "teste"
         queue_name = "teste"
 
-        function_arn = create_lambda_function(lambda_client, function_name)
+        create_lambda_function(lambda_client, function_name)
         topic_arn = create_sns_topic(sns_client, topic_name)
         queue_url, sqs_queue_arn = create_sqs_queue(sqs_client, queue_name)
         subscribe_sqs_to_sns(sns_client, topic_arn, sqs_queue_arn)
