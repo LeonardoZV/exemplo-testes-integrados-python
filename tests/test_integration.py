@@ -35,18 +35,19 @@ def subscribe_sqs_to_sns(sns_client, topic_arn, queue_arn):
 
 @pytest.mark.filterwarnings("ignore:datetime.datetime.utcnow")
 def test_lambda_function():
+    # Arrange
     localstack = (LocalStackContainer(image="localstack/localstack:latest", region_name="us-east-1")
                   .with_services("lambda", "sns", "sqs")
                   .with_env("LAMBDA_RUNTIME_IMAGE_MAPPING", '{"python3.12": "public.ecr.aws/lambda/python:3.12"}')
                   # SESSION_ID NECESSARIO PARA QUE O LAMBDA CONTAINER SEJA EXCLUIDO AUTOMATICAMENTE.
                   # É UM BUG QUE FOI CONCERTADO NA LIB JAVA (https://github.com/localstack/localstack/issues/8616).
                   # MAS AINDA CORRIGIDO NÃO NA LIB PYTHON.
-                  .with_env("LAMBDA_DOCKER_FLAGS", f"-l {LABEL_SESSION_ID}={SESSION_ID} -e LOCALSTACK=True")
+                  .with_env("LAMBDA_DOCKER_FLAGS", f"-l {LABEL_SESSION_ID}={SESSION_ID}")
                   # NECESSARIO PARA QUE O LAMBDA CONTAINER SEJA CRIADO AUTOMATICAMENTE.
                   .with_volume_mapping("/var/run/docker.sock", "/var/run/docker.sock", "rw"))
 
     with localstack as localstack:
-
+        
         lambda_client = localstack.get_client("lambda")
         sns_client = localstack.get_client("sns")
         sqs_client = localstack.get_client("sqs")
@@ -60,11 +61,14 @@ def test_lambda_function():
         queue_url, sqs_queue_arn = create_sqs_queue(sqs_client, queue_name)
         subscribe_sqs_to_sns(sns_client, topic_arn, sqs_queue_arn)
 
-        payload = {"bla": "blab"}
-        lambda_client.invoke(FunctionName=function_name, Payload=json.dumps(payload).encode())
+        input = {"bla": "blab"}
 
-        response = sqs_client.receive_message(QueueUrl=queue_url, MaxNumberOfMessages=10, WaitTimeSeconds=5)
-        messages = response.get('Messages', [])
+        # Act
+        lambda_response = lambda_client.invoke(FunctionName=function_name, Payload=json.dumps(input).encode())
+
+        sqs_response = sqs_client.receive_message(QueueUrl=queue_url, MaxNumberOfMessages=10, WaitTimeSeconds=5)
+        messages = sqs_response.get('Messages', [])
         messages_dict = [json.loads(json.loads(message["Body"])["Message"]) for message in messages]
 
-        assert payload in messages_dict
+        # Assert
+        assert input in messages_dict

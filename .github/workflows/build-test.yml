@@ -40,4 +40,4 @@ jobs:
         
     - name: Test with pytest
       run: |
-        pytest -s tests
+        pytest -v --showlocals --capture=no --junitxml=tests/relatorio.xml tests

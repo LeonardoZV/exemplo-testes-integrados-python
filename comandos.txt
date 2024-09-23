@@ -1,2 +1,2 @@
 python -m pip install -r tests/requirements.txt
-python -m pytest -s tests
+python -m pytest -v --showlocals --capture=no --junitxml=tests/relatorio.xml tests
