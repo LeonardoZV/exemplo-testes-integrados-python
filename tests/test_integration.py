@@ -41,7 +41,7 @@ def test_lambda_function():
                   .with_env("LAMBDA_RUNTIME_IMAGE_MAPPING", '{"python3.12": "public.ecr.aws/lambda/python:3.12"}')
                   # SESSION_ID NECESSARIO PARA QUE O LAMBDA CONTAINER SEJA EXCLUIDO AUTOMATICAMENTE.
                   # É UM BUG QUE FOI CONCERTADO NA LIB JAVA (https://github.com/localstack/localstack/issues/8616).
-                  # MAS AINDA CORRIGIDO NÃO NA LIB PYTHON.
+                  # MAS AINDA NÃO CORRIGIDO NA LIB PYTHON.
                   .with_env("LAMBDA_DOCKER_FLAGS", f"-l {LABEL_SESSION_ID}={SESSION_ID}")
                   # NECESSARIO PARA QUE O LAMBDA CONTAINER SEJA CRIADO AUTOMATICAMENTE.
                   .with_volume_mapping("/var/run/docker.sock", "/var/run/docker.sock", "rw"))
@@ -71,4 +71,5 @@ def test_lambda_function():
         messages_dict = [json.loads(json.loads(message["Body"])["Message"]) for message in messages]
 
         # Assert
+        assert lambda_response['StatusCode'] == 200
         assert input in messages_dict
