@@ -35,7 +35,7 @@ def subscribe_sqs_to_sns(sns_client, topic_arn, queue_arn):
 
 @pytest.mark.filterwarnings("ignore:datetime.datetime.utcnow")
 def test_lambda_function():
-    localstack = (LocalStackContainer(image="localstack/localstack:latest")
+    localstack = (LocalStackContainer(image="localstack/localstack:latest", region_name="us-east-1")
                   .with_services("lambda", "sns", "sqs")
                   .with_env("LAMBDA_RUNTIME_IMAGE_MAPPING", '{"python3.12": "public.ecr.aws/lambda/python:3.12"}')
                   # SESSION_ID NECESSARIO PARA QUE O LAMBDA CONTAINER SEJA EXCLUIDO AUTOMATICAMENTE.
@@ -61,7 +61,7 @@ def test_lambda_function():
         subscribe_sqs_to_sns(sns_client, topic_arn, sqs_queue_arn)
 
         payload = {"bla": "blab"}
-        lambda_client.invoke(FunctionName=function_name, Payload=json.dumps(payload).encode('utf-8'))
+        lambda_client.invoke(FunctionName=function_name, Payload=json.dumps(payload).encode())
 
         response = sqs_client.receive_message(QueueUrl=queue_url, MaxNumberOfMessages=10, WaitTimeSeconds=5)
         messages = response.get('Messages', [])
