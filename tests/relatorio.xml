@@ -1,1 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?><testsuites><testsuite name="pytest" errors="0" failures="0" skipped="0" tests="1" time="7.822" timestamp="2024-09-23T12:33:56.940009-03:00" hostname="LeonardoZV"><testcase classname="tests.test_integration" name="test_lambda_function" time="7.513" /></testsuite></testsuites>
