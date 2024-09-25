@@ -127,7 +127,5 @@ def test_lambda_function():
         messages = sqs_response.get('Messages', [])
         messages_dict = [json.loads(json.loads(message["Body"])["Message"]) for message in messages]
 
-        print(messages_dict)
-
         # Assert
         assert input in messages_dict
