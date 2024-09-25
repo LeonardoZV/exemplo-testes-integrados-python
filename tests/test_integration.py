@@ -49,8 +49,8 @@ def create_sqs_queue(sqs_client, queue_name):
 
 
 def subscribe_sqs_to_sns(sns_client, topic_arn, queue_arn):
-    sns_client.subscribe(TopicArn=topic_arn, Protocol='sqs', Endpoint=queue_arn)
-
+    response = sns_client.subscribe(TopicArn=topic_arn, Protocol='sqs', Endpoint=queue_arn)
+    return response
 
 def create_lambda_function(lambda_client, lambda_function_name):
     lambda_folder_path = os.path.abspath(os.path.dirname(__file__).replace("tests", "app"))
@@ -60,7 +60,7 @@ def create_lambda_function(lambda_client, lambda_function_name):
         Role='arn:aws:iam::000000000000:role/lambda-role',
         Handler='lambda_function.lambda_handler',
         Code={
-            'S3Bucket': 'hot-reload', 
+            'S3Bucket': 'hot-reload',
             'S3Key': lambda_folder_path
         }
     )
@@ -74,6 +74,7 @@ def create_event_source_mapping(lambda_client, lambda_function_name, event_sourc
         EventSourceArn=event_source_arn,
         StartingPosition='TRIM_HORIZON'
     )
+    return response
 
 
 @pytest.mark.filterwarnings("ignore:datetime.datetime.utcnow")
