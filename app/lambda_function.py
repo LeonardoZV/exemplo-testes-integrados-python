@@ -12,6 +12,6 @@ def lambda_handler(event, context):
     topic_arn = f"arn:aws:sns:{AWS_REGION}:{AWS_ACCOUNT_ID}:teste"
 
     for record in event["Records"]:
-        sns_client.publish(TopicArn=topic_arn, Message=json.dumps(record["dynamodb"]["Keys"]))
+        sns_client.publish(TopicArn=topic_arn, Message=json.dumps(record["dynamodb"]["Keys"]), MessageAttributes={"teste": {"DataType": "String", "StringValue": "A"}})
     
     return {'statusCode': 200, 'body': 'Processamento Realizado'}

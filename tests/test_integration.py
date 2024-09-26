@@ -5,7 +5,7 @@ from testcontainers.localstack import LocalStackContainer
 from testcontainers.core.labels import LABEL_SESSION_ID, SESSION_ID
 
 
-def create_table(dynamodb_client, dynamodb_table_name):
+def create_dynamodb_table(dynamodb_client, dynamodb_table_name):
     response = dynamodb_client.create_table(
         AttributeDefinitions=[
             {
@@ -49,8 +49,9 @@ def create_sqs_queue(sqs_client, queue_name):
 
 
 def subscribe_sqs_to_sns(sns_client, topic_arn, queue_arn):
-    response = sns_client.subscribe(TopicArn=topic_arn, Protocol='sqs', Endpoint=queue_arn)
+    response = sns_client.subscribe(TopicArn=topic_arn, Protocol='sqs', Endpoint=queue_arn, Attributes={"RawMessageDelivery": "true"})
     return response
+
 
 def create_lambda_function(lambda_client, lambda_function_name):
     lambda_folder_path = os.path.abspath(os.path.dirname(__file__).replace("tests", "app"))
@@ -91,7 +92,7 @@ def test_lambda_function():
                   .with_volume_mapping("/var/run/docker.sock", "/var/run/docker.sock", "rw"))
 
     with localstack as localstack:
-        
+
         dynamodb_client = localstack.get_client("dynamodb")
         sns_client = localstack.get_client("sns")
         sqs_client = localstack.get_client("sqs")
@@ -102,31 +103,24 @@ def test_lambda_function():
         queue_name = "teste"
         function_name = "teste"
 
-        stream_arn = create_table(dynamodb_client, table_name)["TableDescription"]["LatestStreamArn"]
+        stream_arn = create_dynamodb_table(dynamodb_client, table_name)["TableDescription"]["LatestStreamArn"]
         topic_arn = create_sns_topic(sns_client, topic_name)['TopicArn']
         queue_url, sqs_queue_arn = create_sqs_queue(sqs_client, queue_name)
         subscribe_sqs_to_sns(sns_client, topic_arn, sqs_queue_arn)
         create_lambda_function(lambda_client, function_name)['FunctionArn']
         create_event_source_mapping(lambda_client, function_name, stream_arn)
 
-        input = {
-            'pk': {
-                'S': 'A'
-            },
-            'sk': {
-                'S': 'B'
-            }
-        }
+        header = {"teste": {"DataType": "String", "StringValue": "A"}}
+        item = {"pk": {"S": "A" }, "sk": {"S": "B" }}
 
         # Act
-        put_item_response = dynamodb_client.put_item(
-            TableName=table_name,
-            Item=input
-        )
+        put_item_response = dynamodb_client.put_item(TableName=table_name, Item=item)
+        sqs_response = sqs_client.receive_message(QueueUrl=queue_url, MaxNumberOfMessages=10, WaitTimeSeconds=5, MessageAttributeNames=["All"])
+        actual_sqs_message_attributes = sqs_response["Messages"][0]["MessageAttributes"]
+        actual_sqs_message_body = json.loads(sqs_response["Messages"][0]["Body"])
 
-        sqs_response = sqs_client.receive_message(QueueUrl=queue_url, MaxNumberOfMessages=10, WaitTimeSeconds=5)
-        messages = sqs_response.get('Messages', [])
-        messages_dict = [json.loads(json.loads(message["Body"])["Message"]) for message in messages]
+        print(actual_sqs_message_attributes)
 
         # Assert
-        assert input in messages_dict
+        assert header == actual_sqs_message_attributes
+        assert item == actual_sqs_message_body
